@@ -1,3 +1,4 @@
+# If using a Render Blueprint with a nested service directory, use ../render.yaml.
 services:
   - type: web
     name: mcp-customer-support-agent
@@ -6,3 +7,4 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /health
+    autoDeployTrigger: checksPass

@@ -1,88 +1,149 @@
-# MCP Customer Support Agent 🤖
+# SupportDesk AI — MCP Customer Support MVP
 
-A **beginner-friendly, open-source Agentic AI + MCP** portfolio project. Includes a browser chat UI, FastAPI backend, real Model Context Protocol (MCP) server and client, three tools, SQLite demo data, and optional open-source Ollama planning.
+**[Live Demo](https://mcp-customer-support-agent.onrender.com/) · [Source Repository](https://github.com/harshithareddy0008/mcp-customer-support-agent)**
+
+An open-source, portfolio-ready customer support assistant built using **Python, FastAPI, the official Model Context Protocol (MCP) SDK, SQLite and a responsive dashboard**. Gemini API support (optional free tier), Ollama support, and an offline rules fallback.
+
+> The free deployed demo may sleep and its ephemeral database resets on restart. Ticket/order content is synthetic. This is a demo, not a production customer support service.
+
+## What it demonstrates
+
+- A **real MCP client and server**: the FastAPI agent opens a Streamable HTTP `ClientSession`, calls an MCP tool, and converts the tool response into a grounded customer reply.
+- **Four support workflows**: FAQ retrieval, order lookup, ticket creation, and ticket status lookup.
+- **Visible execution trace**: selected MCP tool, planner type, execution time and a live activity panel.
+- **Dashboard KPIs**: total agent calls, tool success percentage, average execution time, and ticket count.
+- **Real development workflow**: GitHub Actions runs unit tests and 4-tool MCP integration checks. Render can auto-deploy after checks pass.
+
+![No screenshots yet](https://img.shields.io/badge/Build-FastAPI%20%2B%20MCP-b7ef81?style=flat-square)
 
 ## Architecture
 
 ```text
-Browser UI → POST /api/chat → Agent planner (Ollama optional; rules fallback)
-                                    ↓
-                          MCP ClientSession
-                                    ↓ Streamable HTTP
-                            /mcp MCP Server
-                                    ↓
-               Knowledge base | Order lookup | Support ticket
-                                    ↓
-                              SQLite / Python
+Browser UI (HTML, CSS, vanilla JavaScript)
+  | POST /api/chat                       GET /api/metrics, /api/demo/orders, /api/knowledge
+  v
+FastAPI App
+  | Agent planner -> Gemini (when key set) / Ollama / rules fallback
+  v
+MCP ClientSession -> Streamable HTTP POST http://127.0.0.1:$PORT/mcp
+  v
+Mounted FastMCP server (same web process)
+  |-- search_knowledge_base(topic)
+  |-- get_order_status(order_id)
+  |-- open_support_ticket(email, issue)
+  |-- get_ticket_status(ticket_id, email)
+  v
+SQLite demo data -> grounded tool result -> customer response
 ```
 
-**Important:** Without Ollama this is a **rule-based tool-using agent**, not an LLM-driven autonomous agent. MCP calls are real in both modes. Ollama can make tool selection LLM-driven when an accessible Ollama server is configured. The default mode works with **zero API keys** on Render.
+The planner is **deterministic by default**; it is not an autonomous LLM agent in this mode. Adding a valid Gemini API key enables LLM-selected MCP tools; a reachable Ollama server is also supported. **LangChain and LangGraph are not used in this release**.
 
-## Features
-- Real MCP server with `search_knowledge_base`, `get_order_status`, `open_support_ticket` tools
-- MCP client connects using Streamable HTTP and invokes selected tool
-- Free browser UI showing which MCP tool was used
-- SQLite demo orders `ORD1001`, `ORD1002`, `ORD1003`
-- Optional Ollama model (`llama3.2:1b`) for LLM-based tool planning
-- Render Blueprint config and `/health` endpoint
+## Local development
 
-## Run locally
-
-Requires Python 3.11+.
+Requires **Python 3.11**.
 
 ```bash
+cd support-mcp-agent
 python -m venv .venv
-# Linux/macOS: source .venv/bin/activate
-# Windows: .venv\Scripts\activate
+# Windows PowerShell: .venv\Scripts\Activate.ps1
+# macOS/Linux: source .venv/bin/activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
 ```
 
-Open http://127.0.0.1:8000 and try:
-- `Where is order ORD1001?`
-- `What is your return policy?`
-- `Create ticket test@example.com my package is damaged`
+Open <http://127.0.0.1:8000>. Try the demo questions:
 
-MCP endpoint: `http://localhost:8000/mcp/` (Streamable HTTP; use an MCP client, not a browser GET page).
+1. `Where is order ORD1001?`
+2. `What is your refund policy?`
+3. `Create ticket demo@example.com my parcel arrived damaged`
+4. `Check ticket status TKT-00001 for demo@example.com` (use the actual ticket ID shown by step 3)
 
-## Optional open-source LLM with Ollama
+Health: `/health` · API docs: `/docs` · MCP endpoint: `/mcp` (JSON-RPC, not a browser GET page)
 
-Install Ollama locally, then run `ollama pull llama3.2:1b`. Set `OLLAMA_URL=http://localhost:11434` and `OLLAMA_MODEL=llama3.2:1b` in your environment before launching FastAPI. On a remote host, Ollama must be reachable **from the backend**, not your browser. For production, use a securely hosted model endpoint and avoid exposing Ollama publicly.
 
-## GitHub upload
+## Enable Gemini LLM (free-tier API; model is **not open source**)
 
-Create an empty public repository in GitHub, then run in the extracted project folder:
+1. Visit [Google AI Studio API keys](https://aistudio.google.com/apikey), sign in, and create/copy an API key.
+2. Inside `support-mcp-agent/`, make a copy of `.env.example` named `.env` (this file is ignored by Git).
+3. Set these lines in `.env` (paste **your** key, not a placeholder):
+
+   ```dotenv
+   GEMINI_API_KEY=YOUR_REAL_GEMINI_API_KEY
+   GEMINI_MODEL=gemini-2.5-flash-lite
+   ```
+
+4. Run `pip install -r requirements.txt` and `uvicorn app.main:app --reload` locally. The agent activity panel will show `Gemini planner` if the LLM call succeeds; on quota/errors it safely falls back to `Rules`.
+5. For **Render**, add a **secret** via Dashboard → Service → Environment → Add Environment Variable: `GEMINI_API_KEY` with your actual key; optionally `GEMINI_MODEL=gemini-2.5-flash-lite`. Save and redeploy. A local `.env` is **not uploaded** to Render, even after `git push`.
+
+Never commit `.env` or paste the key into README, GitHub issues, or frontend JavaScript. Google offers a limited free tier (model/rate limits vary); verify current pricing and data-use terms at https://ai.google.dev/gemini-api/docs/pricing . Synthetic customer data only.
+
+## Tests
 
 ```bash
-git init
-git add .
-git commit -m "Build MCP customer support agent"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/mcp-customer-support-agent.git
-git push -u origin main
+cd support-mcp-agent
+pip install pytest
+python -m pytest -q tests
+# In a SECOND terminal, run uvicorn first, then:
+python smoke_test.py
 ```
 
-## Deploy to Render (free tier where available)
+The smoke test calls all four tools **through the actual MCP protocol**. CI runs it automatically on commits and PRs.
 
-1. Sign into Render and choose **New → Blueprint**; connect your GitHub repo.
-2. Select the repo containing `render.yaml`, review the settings and deploy.
-3. Or choose **New → Web Service**, runtime Python, build `pip install -r requirements.txt`, start `uvicorn app.main:app --host 0.0.0.0 --port $PORT`.
-4. Visit the generated `https://...onrender.com` URL. Verify `/health` returns `{"status":"ok"}`.
+## Deploy to existing GitHub + Render
 
-**Limitations:** Render free instances can sleep and have ephemeral disks. Demo orders are re-seeded on restart, and support tickets can be lost on redeploy/restart. Use managed Postgres for persistent production tickets. The sample ticket endpoint has no login, spam protection, or customer verification and is for demonstration only. Never store sensitive customer information here. Default order lookup exposes synthetic demo data only.
+Your current GitHub repo has a `support-mcp-agent` subfolder; the root-level `render.yaml` accounts for that with `rootDir: support-mcp-agent`.
 
-## Files
-- `app/main.py`: FastAPI routes and MCP server lifecycle
-- `app/agent.py`: planner and **real MCP client** tool execution
-- `app/mcp_server.py`: MCP tool definitions
-- `app/data.py`: SQLite storage and demo knowledge base
-- `static/index.html`: frontend UI
-- `render.yaml`: one-click Render deployment settings
-- `.env.example`: optional environment configuration
+1. Copy the contents of this ZIP **into the root of your local git clone**, replacing existing files. Do not create a second `support-mcp-agent` folder.
+2. Commit and push to `main` (commands below).
+3. In existing Render Web Service → **Settings**:
+   - Repository: `harshithareddy0008/mcp-customer-support-agent`
+   - Branch: `main`
+   - Root Directory: `support-mcp-agent`
+   - Build: `pip install -r requirements.txt`
+   - Start: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - Auto-Deploy: **After CI Checks Pass** (recommended) or **On Commit** (fastest)
+4. Next push triggers a build/deployment automatically. **Do not create a duplicate Render service.**
 
-## Interview explanation
+```bash
+git clone https://github.com/harshithareddy0008/mcp-customer-support-agent.git
+cd mcp-customer-support-agent
+# Copy extracted files here, preserving the support-mcp-agent/ and .github/ folders.
+git add .
+git commit -m "feat: build SupportDesk MCP agent MVP dashboard"
+git push origin main
+```
 
-“Users send messages from the web UI to FastAPI. My agent chooses a tool using an optional open-source Ollama LLM or a fallback planner. It connects as an MCP client to a separately exposed MCP server endpoint using the MCP protocol, invokes a knowledge-base, order-tracking or ticket tool, and returns a grounded result. I deployed the app on Render.”
+For a **new** service created from the root-level Blueprint file, Render uses `autoDeployTrigger: checksPass` (deploy when CI passes). Render's auto-deploy setting is stored per service, so uploading YAML alone does not change an already-created manual Web Service.
 
-## License
-MIT — see `LICENSE`.
+## Source structure
+
+```text
+.github/workflows/ci.yml        -> Unit tests + real MCP smoke tests on push
+render.yaml                     -> Blueprint: rootDir + auto-deploy after CI
+support-mcp-agent/
+  app/main.py                   -> API endpoints, lifecycle, MCP ASGI mount
+  app/agent.py                  -> Planner and MCP ClientSession
+  app/mcp_server.py             -> Four MCP tools
+  app/data.py                   -> SQLite operations and synthetic data
+  static/index.html            -> User-facing support workspace
+  static/style.css             -> Responsive interface design
+  static/app.js                -> Browser chat, tools, ticket lookup, metrics
+  tests/                       -> Unit tests
+  smoke_test.py                -> Four real MCP integration checks
+  requirements.txt             -> Python dependencies
+  .python-version              -> Render Python version pin
+```
+
+## Limitations and security
+
+- Public demo; **no login, abuse prevention or real customer verification**. Never use real customer data. The synthetic orders are intentionally public.
+- Tickets are scoped by email for lookup, but email knowledge is not authentication; this is not suitable for production customer data.
+- SQLite on Render's free ephemeral filesystem can reset on restarts/redeploys. For a real deployment, use PostgreSQL, auth and persistent storage.
+- The publicly mounted MCP endpoint is not authenticated; do not attach privileged production tools or secrets to it. Internal agent calls use localhost. Restrict access before adding powerful integrations.
+- Without a Gemini API key or reachable Ollama server, the project uses a rules planner. Gemini routes tool calls using the LLM; it does not replace the real MCP client/server.
+
+## Interview pitch
+
+"I built a customer support MVP with FastAPI and the official MCP SDK. A planner selects one of four tools, and an MCP ClientSession invokes it over Streamable HTTP. The dashboard visualizes which tool was called and shows live response metrics. I added SQLite for demo data, GitHub Actions tests, and auto-deployment to Render. With GEMINI_API_KEY configured server-side, Gemini plans tool calls; without it, the app falls back to rules. It supports optional Ollama too."
+
+License: MIT (see `support-mcp-agent/LICENSE`).

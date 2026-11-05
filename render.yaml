@@ -1,0 +1,12 @@
+# Blueprint for a NEW Render service. Existing manual Web Services: see README.
+services:
+  - type: web
+    name: mcp-customer-support-agent
+    runtime: python
+    plan: free
+    branch: main
+    rootDir: support-mcp-agent
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeployTrigger: checksPass

@@ -1,4 +1,76 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MCP Support Agent</title><style>
-:root{font-family:system-ui,Arial;background:#0b1220;color:#eef3ff}*{box-sizing:border-box}body{margin:0;display:grid;place-items:center;min-height:100vh;padding:20px}.app{width:min(760px,100%);background:#172239;border:1px solid #34435e;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px #0005}header{padding:24px;background:#1c2b47}h1{font-size:24px;margin:0 0 8px}.sub{color:#b9c8e5;font-size:14px}.messages{height:370px;overflow:auto;padding:22px;display:flex;flex-direction:column;gap:12px}.bubble{padding:12px 16px;border-radius:14px;max-width:88%;line-height:1.5;white-space:pre-wrap}.bot{background:#263855;align-self:flex-start}.user{background:#3767cc;align-self:flex-end}.meta{font-size:11px;color:#b7c9e7;margin-top:7px}.examples{padding:0 20px 12px;display:flex;gap:8px;flex-wrap:wrap}.examples button{background:#263855;border:1px solid #52688b;color:#fff;border-radius:20px;padding:8px;cursor:pointer}form{padding:16px;display:flex;gap:10px;border-top:1px solid #34435e}input{flex:1;min-width:0;background:#0b1220;border:1px solid #536587;border-radius:10px;padding:14px;color:#fff;font-size:15px}button.send{background:#4b80ef;color:white;border:0;border-radius:10px;padding:0 22px;cursor:pointer}button:disabled{opacity:.5}</style></head><body><main class="app"><header><h1>🤖 MCP Customer Support Agent</h1><div class="sub">FastAPI · Real MCP tool calls · Open source · Optional Ollama</div></header><section id="messages" class="messages" aria-live="polite"><div class="bubble bot">Hi! Ask about shipping, returns, refunds, or demo order ORD1001. To create a ticket, write “create ticket name@example.com my issue”.</div></section><div class="examples"><button onclick="setText('Where is order ORD1001?')">Track order</button><button onclick="setText('What is your refund policy?')">Refund policy</button><button onclick="setText('Create ticket test@example.com my parcel is damaged')">Create ticket</button></div><form id="form"><input id="msg" placeholder="Ask a customer support question..." required maxlength="1500" aria-label="Your message"><button class="send" id="send">Send</button></form></main><script>
-const messages=document.getElementById('messages'),msg=document.getElementById('msg'),send=document.getElementById('send');function setText(s){msg.value=s;msg.focus()}function add(text,cls,meta=''){const div=document.createElement('div');div.className='bubble '+cls;div.textContent=text;if(meta){const small=document.createElement('div');small.className='meta';small.textContent=meta;div.appendChild(small)}messages.appendChild(div);messages.scrollTop=messages.scrollHeight}document.getElementById('form').onsubmit=async(e)=>{e.preventDefault();const text=msg.value.trim();if(!text)return;add(text,'user');msg.value='';send.disabled=true;try{const r=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({message:text})});const d=await r.json();if(!r.ok)throw Error(d.detail||'Request failed');add(d.answer,'bot',`MCP tool: ${d.tool_used} | Planner: ${d.planner}`)}catch(err){add('Error: '+err.message,'bot')}finally{send.disabled=false;msg.focus()}};
-</script></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b101b">
+  <meta name="description" content="SupportDesk AI: a real MCP-powered customer support agent MVP.">
+  <title>SupportDesk AI — Agentic Support Workspace</title>
+  <link rel="stylesheet" href="/assets/style.css">
+  <script src="/assets/app.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <a class="brand" href="/" aria-label="SupportDesk AI home">
+        <span class="brand-mark">✳</span>
+        <span><strong>supportdesk<span class="brand-accent">.ai</span></strong><small>AGENT WORKSPACE</small></span>
+      </a>
+      <div class="side-group-title">WORKSPACE</div>
+      <nav class="nav" aria-label="Main navigation">
+        <button class="nav-link selected" data-view="chat"><span class="nav-symbol">◫</span> Playground <span class="nav-end">↗</span></button>
+        <button class="nav-link" data-view="orders"><span class="nav-symbol">▤</span> Demo orders</button>
+        <button class="nav-link" data-view="knowledge"><span class="nav-symbol">⌘</span> Knowledge base</button>
+        <button class="nav-link" data-view="ticket"><span class="nav-symbol">▧</span> Ticket tracker</button>
+      </nav>
+      <div class="side-group-title integrations-label">CONNECTED TOOLS</div>
+      <div class="integration"><span class="integration-dot"></span><span>MCP Server</span><span class="integration-tag">HTTP</span></div>
+      <div class="integration"><span class="integration-dot blue"></span><span>SQLite Demo DB</span><span class="integration-tag">LOCAL</span></div>
+      <div class="sidebar-bottom">
+        <div class="opensource"><span>✦</span><div><strong>Open-source MVP</strong><small>Real protocol. No paid keys.</small></div></div>
+        <a class="source-link" href="https://github.com/harshithareddy0008/mcp-customer-support-agent" target="_blank" rel="noopener noreferrer">View GitHub repository <span>↗</span></a>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="topline"><span><span class="breadcrumb-muted">Workspace</span> <span class="slash">/</span> <span id="breadcrumb">Agent playground</span></span><span class="top-right"><span class="live-pulse"></span> Demo environment <span class="top-sep">│</span> v1.0</span></div>
+      <header class="page-intro"><div><div class="eyebrow">AI OPERATIONS / CUSTOMER EXPERIENCE</div><h1>Customer support, <em>on autopilot.</em></h1><p>A production-inspired demo of how AI agents use MCP tools to turn support requests into real actions.</p></div><div class="header-actions"><a href="/docs" target="_blank" class="secondary-btn">API docs ↗</a><button id="resetChat" class="primary-btn">↻ New conversation</button></div></header>
+
+      <div class="metrics">
+        <div class="metric"><div class="metric-label">Total requests <span>↗</span></div><div id="metricRequests" class="metric-value">—</div><div class="metric-help">Real MCP tool calls</div></div>
+        <div class="metric"><div class="metric-label">Success rate <span>◉</span></div><div class="metric-value" id="metricSuccess">—</div><div class="metric-help">Since current demo startup</div></div>
+        <div class="metric"><div class="metric-label">Avg. response <span>◷</span></div><div class="metric-value" id="metricLatency">—</div><div class="metric-help">Measured end to end</div></div>
+        <div class="metric"><div class="metric-label">Support tickets <span>▧</span></div><div class="metric-value" id="metricTickets">—</div><div class="metric-help">Demo tickets created</div></div>
+      </div>
+
+      <div class="content-grid">
+        <section class="workspace panel" aria-label="Agent workspace">
+          <div class="panel-header"><div><div class="heading-icon">✧</div><div><h2 id="panelTitle">Agent playground</h2><p id="panelSubtitle">Talk to the agent and watch every tool action.</p></div></div><div class="connection-pill"><span></span> MCP enabled</div></div>
+
+          <div class="view is-active" id="view-chat">
+            <div class="conversation" id="messages" aria-live="polite" aria-label="Chat conversation">
+              <div class="message bot intro-message"><div class="avatar">✳</div><div class="bubble-wrap"><div class="who">SupportDesk Agent <span>· just now</span></div><div class="bubble">Hey there! 👋 I’m your support agent. I can track demo orders, explain shipping and refund policies, create tickets, and check ticket status.<br><br>Pick a suggestion below or send your own message.</div></div></div>
+            </div>
+            <div class="suggestions" id="suggestions"><div class="suggestion-label">SUGGESTED PROMPTS</div><div class="prompt-row"><button data-prompt="Where is order ORD1001?">📦 Track ORD1001</button><button data-prompt="What is your refund policy?">↩ Refund policy</button><button data-prompt="Create ticket demo@example.com my parcel arrived damaged">🎫 Create ticket</button></div></div>
+            <form id="chatForm" class="compose"><label class="sr-only" for="chatInput">Your message</label><textarea id="chatInput" rows="1" maxlength="1200" placeholder="Ask about an order, policy, or ticket..." required></textarea><button id="chatSend" type="submit" aria-label="Send message">➤</button></form>
+            <div class="form-note">↵ Enter to send · Shift + Enter for new line <span>Demo only — don't enter personal information</span></div>
+          </div>
+
+          <div class="view" id="view-orders"><div class="view-banner"><span>📦</span><div><h3>Demo order tracking</h3><p>These are synthetic sample orders. Pick one to route it through the MCP order tool.</p></div></div><div id="orderList" class="order-list"><div class="empty-state">Loading demo orders…</div></div></div>
+          <div class="view" id="view-knowledge"><div class="view-banner"><span>📚</span><div><h3>Knowledge base</h3><p>See the policy content retrieved by the real MCP knowledge tool.</p></div></div><div id="articleList" class="article-list"><div class="empty-state">Loading knowledge articles…</div></div></div>
+          <div class="view" id="view-ticket"><div class="view-banner"><span>🎟</span><div><h3>Ticket tracker</h3><p>Created a demo ticket? Look it up with its ID and the email used to create it.</p></div></div><form id="ticketForm" class="ticket-form"><label>Ticket ID<input id="ticketId" placeholder="TKT-00001" required maxlength="30"></label><label>Demo email<input id="ticketEmail" type="email" placeholder="demo@example.com" required maxlength="254"></label><button type="submit" class="primary-btn">Check ticket status ↗</button></form><p class="subtle-note">Lookup runs through the real MCP get_ticket_status tool. Never use a real email here.</p></div>
+        </section>
+
+        <aside class="right-panel" aria-label="Agent execution monitor">
+          <div class="monitor panel"><div class="monitor-header"><span>◈</span><div><h2>Agent activity</h2><p>Live execution trace</p></div><span id="monitorState" class="monitor-badge">IDLE</span></div>
+            <div class="monitor-content"><div class="agent-flow"><div class="flow-step"><div class="flow-dot">1</div><div><strong>Interpret user request</strong><span id="flowPlanner">Gemini AI when configured · Rules fallback</span></div></div><div class="flow-line"></div><div class="flow-step"><div class="flow-dot">2</div><div><strong>MCP client connection</strong><span>Streamable HTTP /mcp</span></div></div><div class="flow-line"></div><div class="flow-step"><div class="flow-dot">3</div><div><strong>Tool execution</strong><span id="flowTool">Awaiting a customer request</span></div></div><div class="flow-line"></div><div class="flow-step"><div class="flow-dot">4</div><div><strong>Grounded response</strong><span id="flowResult">Tool result → Customer</span></div></div></div><div class="tool-box"><div class="tool-header">LAST TOOL CALL <span>↗</span></div><div id="lastTool">No calls yet</div><div class="tool-time" id="lastTime">Run a request to see execution details</div></div></div>
+          </div>
+          <div class="activity-card panel"><div class="activity-title">Recent activity <button id="refreshMetrics" aria-label="Refresh activity">↻</button></div><div id="activityList"><p class="no-activity">No activity yet. Ask the agent a question.</p></div></div>
+          <div class="info-card"><span class="info-icon">ⓘ</span><p><strong>How this works</strong><br>FastAPI routes a request → planner chooses a tool → MCP ClientSession calls the MCP server → SQLite returns grounded demo data.</p></div>
+        </aside>
+      </div>
+      <footer><span>SUPPORTDESK AI / OPEN-SOURCE MVP</span><span>Built with Python · FastAPI · MCP · SQLite · Render</span></footer>
+    </main>
+  </div>
+</body>
+</html>
