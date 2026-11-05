@@ -28,9 +28,6 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-app.mount("/mcp", mcp.streamable_http_app())
-
-
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1, max_length=1500)
 
@@ -62,3 +59,9 @@ async def chat(body: ChatRequest):
             status_code=503,
             detail="MCP tool service temporarily unavailable"
         ) from exc
+
+
+# Register after all FastAPI routes so /, /health and /api/chat take priority.
+# The MCP SDK already serves /mcp INSIDE streamable_http_app().
+# Mounting the sub-app at /mcp would otherwise expose it at /mcp/mcp.
+app.mount("/", mcp.streamable_http_app())
