@@ -142,8 +142,5 @@ support-mcp-agent/
 - The publicly mounted MCP endpoint is not authenticated; do not attach privileged production tools or secrets to it. Internal agent calls use localhost. Restrict access before adding powerful integrations.
 - Without a Gemini API key or reachable Ollama server, the project uses a rules planner. Gemini routes tool calls using the LLM; it does not replace the real MCP client/server.
 
-## Interview pitch
-
-"I built a customer support MVP with FastAPI and the official MCP SDK. A planner selects one of four tools, and an MCP ClientSession invokes it over Streamable HTTP. The dashboard visualizes which tool was called and shows live response metrics. I added SQLite for demo data, GitHub Actions tests, and auto-deployment to Render. With GEMINI_API_KEY configured server-side, Gemini plans tool calls; without it, the app falls back to rules. It supports optional Ollama too."
 
 License: MIT (see `support-mcp-agent/LICENSE`).
